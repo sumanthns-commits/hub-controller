@@ -1,0 +1,141 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  SAM Template for hub-controller
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 100
+
+Parameters:
+  HubResourceServerName:
+    Type: String
+    Default: hub-controller
+    Description: Name of the cognito resouce server for api
+  HubCreatorScope:
+    Type: String
+    Default: hub.create
+    Description: Scope to allow hub creation in cognito
+
+Resources:
+  HubControllerAPI:
+    DependsOn: UserPool
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      Auth:
+        DefaultAuthorizer: Oauth2Authorizer
+        Authorizers:
+          Oauth2Authorizer:
+            AuthorizationScopes:
+              - !Sub ${HubResourceServerName}/${HubCreatorScope}
+            IdentitySource: $request.header.Authorization
+            JwtConfiguration:
+              issuer: !Sub https://cognito-idp.${AWS::Region}.amazonaws.com/${UserPool}
+              audience:
+                - !Ref UserPoolMachineClient
+
+  HubControllerFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      Description: A simple example includes a .NET Core WebAPI App with DynamoDB table.
+      CodeUri: ./src/hub-controller/
+      Handler: hub-controller::HubController.LambdaEntryPoint::FunctionHandlerAsync
+      Runtime: dotnetcore3.1
+      MemorySize: 1024
+      Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
+        Variables:
+          TABLE_NAME: !Ref HubControllerTable
+          ASPNETCORE_ENVIRONMENT: Production
+          HUB_CREATOR_SCOPE: !Sub ${HubResourceServerName}/${HubCreatorScope}
+      Policies:
+        # Give Create/Read/Update/Delete Permissions to the HubControllerTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref HubControllerTable
+      Events:
+        ProxyApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HubControllerAPI
+            PayloadFormatVersion: "2.0"
+            Path: /{proxy+}
+            Method: ANY
+        RootApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HubControllerAPI
+            PayloadFormatVersion: "2.0"
+            Path: /
+            Method: ANY
+
+  # DynamoDB table to store item: {id: &lt;ID&gt;, name: &lt;NAME&gt;}
+  HubControllerTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: hub-controller-items
+      AttributeDefinitions:
+        - AttributeName: Id
+          AttributeType: S
+        - AttributeName: SortId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: Id
+          KeyType: HASH
+        - AttributeName: SortId
+          KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: 2
+        WriteCapacityUnits: 2
+
+  #Congnito User pool
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: HubUserPool
+      UsernameAttributes:
+        - email
+      AutoVerifiedAttributes:
+        - email
+      AdminCreateUserConfig:
+        AllowAdminCreateUserOnly: false
+
+  UserPoolHubResourceServer:
+    Type: AWS::Cognito::UserPoolResourceServer
+    Properties:
+      Identifier: !Ref HubResourceServerName
+      Name: HubControllerResourceServer
+      Scopes:
+        - ScopeName: !Ref HubCreatorScope
+          ScopeDescription: Create hubs
+      UserPoolId: !Ref UserPool
+
+  # Create a client application for authentication
+  UserPoolMachineClient:
+    DependsOn: UserPoolHubResourceServer
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      UserPoolId: !Ref UserPool
+      GenerateSecret: true
+      SupportedIdentityProviders:
+        - COGNITO
+      AllowedOAuthFlowsUserPoolClient: true
+      AllowedOAuthFlows:
+        - client_credentials
+      AllowedOAuthScopes:
+        - !Sub ${HubResourceServerName}/${HubCreatorScope}
+
+  # Create a hosted domain for users to signup and login
+  UserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      Domain: !Sub myauth${AWS::AccountId}
+      UserPoolId: !Ref UserPool
+
+Outputs:
+  WebEndpoint:
+    Description: "API Gateway endpoint URL"
+    Value: !Sub "https://${HubControllerAPI}.execute-api.${AWS::Region}.amazonaws.com/"
+
+  AuthUrl:
+    Description: "URL used for getting auth token"
+    Value: !Sub https://${UserPoolDomain}.auth.${AWS::Region}.amazoncognito.com/oauth2/token
