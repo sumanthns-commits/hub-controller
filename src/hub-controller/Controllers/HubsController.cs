@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Mvc;
-
-using HubController.Entities;
 using HubController.Services;
 using Microsoft.AspNetCore.Authorization;
+using AutoMapper;
+using HubController.Models.DTO;
+using HubController.Models.DAO;
 
 namespace HubController.Controllers
 {
@@ -15,10 +16,12 @@ namespace HubController.Controllers
     public class HubsController : ControllerBase
     {
         private readonly IHubService _hubService;
+        private readonly IMapper _mapper;
 
-        public HubsController(IHubService hubService)
+        public HubsController(IHubService hubService, IMapper mapper)
         {
             _hubService = hubService;
+            _mapper = mapper;
         }
 
         // GET api/hubs
@@ -26,7 +29,7 @@ namespace HubController.Controllers
         public async Task<IActionResult> List()
         {
             var hubs = await _hubService.GetAllHubs(HttpContext);
-            return Ok(hubs);
+            return Ok(_mapper.Map<List<HubDTO>>(hubs));
         }
 
         // GET api/hubs/5
@@ -38,19 +41,19 @@ namespace HubController.Controllers
             {
                 throw new KeyNotFoundException($"Hub {id} not found.");
             }
-            return Ok(hub);
+            return Ok(_mapper.Map<HubDTO>(hub));
         }
 
         // POST api/hubs
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody] Hub hub)
+        public async Task<IActionResult> Post([FromBody] HubDAO hub)
         {
             if (hub == null || String.IsNullOrEmpty(hub.Name))
             {
                 throw new ArgumentException("Invalid input! hub name is required");
             }
             var newHub = await _hubService.CreateHub(HttpContext, hub.Name);
-            return CreatedAtAction(nameof(Get), new { Id = newHub.HubId }, newHub);
+            return CreatedAtAction(nameof(Get), new { Id = newHub.HubId }, _mapper.Map<HubDTO>(newHub));
         }
 
         // DELETE api/hubs/5

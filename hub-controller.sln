@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30907.101
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "hub-controller", "src\hub-controller\hub-controller.csproj", "{D5BDD3B3-B2C0-4081-9394-D4033F1FBD39}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "hub-controller.Tests", "test\hub-controller.Tests\hub-controller.Tests.csproj", "{48B30B07-4130-4074-9CCD-C2B958F7E7D5}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D5BDD3B3-B2C0-4081-9394-D4033F1FBD39}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D5BDD3B3-B2C0-4081-9394-D4033F1FBD39}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D5BDD3B3-B2C0-4081-9394-D4033F1FBD39}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D5BDD3B3-B2C0-4081-9394-D4033F1FBD39}.Release|Any CPU.Build.0 = Release|Any CPU
+		{48B30B07-4130-4074-9CCD-C2B958F7E7D5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{48B30B07-4130-4074-9CCD-C2B958F7E7D5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{48B30B07-4130-4074-9CCD-C2B958F7E7D5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{48B30B07-4130-4074-9CCD-C2B958F7E7D5}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {9C2C3666-39BF-4C6D-8393-06AAB38978CE}
+	EndGlobalSection
+EndGlobal

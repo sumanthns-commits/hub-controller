@@ -5,13 +5,11 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 
 using Amazon;
 using Amazon.DynamoDBv2;
 using HubController.Services;
 using HubController.Middleware;
-using Microsoft.AspNetCore.Server.IISIntegration;
 using HubController.Repositories;
 
 namespace HubController
@@ -55,6 +53,9 @@ namespace HubController
             {
                 options.AddPolicy("HubCreator", policy => policy.RequireClaim("scope", hubCreatorScope));
             });
+
+            // Add AutoMapper
+            services.AddAutoMapper(typeof(AutoMappingProfile));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline
