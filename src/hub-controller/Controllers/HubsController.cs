@@ -4,13 +4,7 @@ using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Mvc;
 
-using Amazon.DynamoDBv2;
-using Amazon.DynamoDBv2.DataModel;
-using Amazon.Lambda.Core;
-
 using HubController.Entities;
-using Amazon.DynamoDBv2.DocumentModel;
-using System.Linq;
 using HubController.Services;
 using Microsoft.AspNetCore.Authorization;
 
@@ -20,29 +14,18 @@ namespace HubController.Controllers
     [Route("api/[controller]")]
     public class HubsController : ControllerBase
     {
-        private readonly IAmazonDynamoDB _client;
-        private readonly DynamoDBContext _context;
-        private readonly IUserService _userService;
+        private readonly IHubService _hubService;
 
-        public HubsController(IAmazonDynamoDB client, IUserService userService)
+        public HubsController(IHubService hubService)
         {
-            _client = client;
-            _context = new DynamoDBContext(client);
-            _userService = userService;
+            _hubService = hubService;
         }
 
         // GET api/hubs
         [HttpGet]
         public async Task<IActionResult> List()
         {
-            var userId = _userService.GetUserId(HttpContext);
-            var primaryKey = $"user_hub_${userId}";
-            var hubs = new List<Hub>();
-            var search = _context.QueryAsync<Hub>(primaryKey);
-            do
-            {
-                hubs.AddRange(await search.GetNextSetAsync());
-            } while (!search.IsDone);
+            var hubs = await _hubService.GetAllHubs(HttpContext);
             return Ok(hubs);
         }
 
@@ -50,9 +33,11 @@ namespace HubController.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> Get(Guid id)
         {
-            var userId = _userService.GetUserId(HttpContext);
-            var primaryKey = $"user_hub_${userId}";
-            var hub = await _context.LoadAsync<Hub>(primaryKey, id);
+            var hub = await _hubService.GetHubById(HttpContext, id);
+            if(hub == null)
+            {
+                throw new KeyNotFoundException($"Hub {id} not found.");
+            }
             return Ok(hub);
         }
 
@@ -60,39 +45,19 @@ namespace HubController.Controllers
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] Hub hub)
         {
-            if (hub == null)
+            if (hub == null || String.IsNullOrEmpty(hub.Name))
             {
-                throw new ArgumentException("Invalid input! Book not informed");
+                throw new ArgumentException("Invalid input! hub name is required");
             }
-            var userId = _userService.GetUserId(HttpContext);
-            hub.UserId = $"user_hub_${userId}";
-            hub.HubId = Guid.NewGuid();
-            hub.CreatedAt = DateTime.Now;
-
-            await _context.SaveAsync<Hub>(hub);
-            return CreatedAtAction(nameof(Get), new { Id = hub.HubId }, hub);
+            var newHub = await _hubService.CreateHub(HttpContext, hub.Name);
+            return CreatedAtAction(nameof(Get), new { Id = newHub.HubId }, newHub);
         }
 
         // DELETE api/hubs/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            // Delete the book.
-            var userId = _userService.GetUserId(HttpContext);
-            var primaryKey = $"user_hub_${userId}";
-            await _context.DeleteAsync<Hub>(primaryKey, id);
-
-            // Try to retrieve deleted hub. It should return null.
-            var operationConfig = new DynamoDBOperationConfig
-            {
-                ConsistentRead = true
-            };
-            Hub deletedHub = await _context.LoadAsync<Hub>(primaryKey, id, operationConfig);
-
-            if (deletedHub != null)
-            {
-                throw new Exception($"Could not delete hub {id}! Try again later.");
-            }
+            await _hubService.DeleteHub(HttpContext, id);
 
             return NoContent();
         }

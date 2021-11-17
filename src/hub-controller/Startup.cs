@@ -12,6 +12,7 @@ using Amazon.DynamoDBv2;
 using HubController.Services;
 using HubController.Middleware;
 using Microsoft.AspNetCore.Server.IISIntegration;
+using HubController.Repositories;
 
 namespace HubController
 {
@@ -31,10 +32,14 @@ namespace HubController
                     .AddNewtonsoftJson();
 
             services.AddSwaggerGen();
-            services.AddSingleton<IUserService>(new UserService());
 
             string region = Environment.GetEnvironmentVariable("AWS_REGION") ?? RegionEndpoint.USEast1.SystemName;
             services.AddSingleton<IAmazonDynamoDB>(new AmazonDynamoDBClient(RegionEndpoint.GetBySystemName(region)));
+            
+            // Add custom services
+            services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IHubRepository, DynamoHubRespository>();
+            services.AddScoped<IHubService, HubService>();
 
             // Auth is handled in api gateway. Provide a dummy authentication handler to handle
             // authrorization errors

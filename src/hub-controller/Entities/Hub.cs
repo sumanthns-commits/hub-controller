@@ -20,6 +20,22 @@ namespace HubController.Entities
         [DynamoDBHashKey("Id")] //Partition key
         public String UserId { get; set; }
 
+        public static Hub Create(string userId, string name)
+        {
+            return new Hub()
+            {
+                UserId = GetPrimaryKey(userId),
+                HubId = Guid.NewGuid(),
+                Name = name,
+                CreatedAt = DateTime.UtcNow
+            };
+        }
+
+        public static String GetPrimaryKey(string userId)
+        {
+            return $"user_hub_{userId}";
+        }
+
         [DynamoDBRangeKey("SortId")]
         public Guid HubId { get; set; }
 
