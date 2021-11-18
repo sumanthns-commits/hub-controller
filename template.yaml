@@ -48,7 +48,8 @@ Resources:
           TABLE_NAME: !Ref HubControllerTable
           ASPNETCORE_ENVIRONMENT: Production
           HUB_CREATOR_SCOPE: !Sub ${HubResourceServerName}/${HubCreatorScope}
-          HUBS_ALLOWER_PER_USER: 5
+          HUBS_ALLOWED_PER_USER: 5
+          THINGS_ALLOWED_THINGS_HUB: 10
       Policies:
         # Give Create/Read/Update/Delete Permissions to the HubControllerTable
         - DynamoDBCrudPolicy:

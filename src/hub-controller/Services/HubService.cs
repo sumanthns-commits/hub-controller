@@ -23,7 +23,7 @@ namespace HubController.Services
 
         public async Task<Hub> CreateHub(HttpContext httpContext, String name)
         {
-            var allowedNumberOfHubsPerUser = Int32.Parse(Environment.GetEnvironmentVariable("HUBS_ALLOWER_PER_USER") ?? Constants.HUBS_ALLOWED_PER_USER);
+            var allowedNumberOfHubsPerUser = Int32.Parse(Environment.GetEnvironmentVariable("HUBS_ALLOWED_PER_USER") ?? Constants.DEFAULT_HUBS_ALLOWED_PER_USER);
             var userId = _userService.GetUserId(httpContext);
             var hubs = await _hubRepository.FindAll(userId);
             
@@ -37,7 +37,7 @@ namespace HubController.Services
             // Check if user has already exceeded limit
             if (hubs.Count >= allowedNumberOfHubsPerUser)
             {
-                throw new LimitExceededException("Reached max quota");
+                throw new LimitExceededException("Cannot create more hubs. Limit reached.");
             }
 
             return await _hubRepository.Create(userId, name);

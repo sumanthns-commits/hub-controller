@@ -38,6 +38,9 @@ namespace HubController
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IHubRepository, DynamoHubRespository>();
             services.AddScoped<IHubService, HubService>();
+            services.AddScoped<IThingIdGenerator, ThingIdGenerator>();
+            services.AddScoped<IThingService, ThingService>();
+            services.AddScoped<IThingRepository, DynamoThingRepository>();
 
             // Auth is handled in api gateway. Provide a dummy authentication handler to handle
             // authrorization errors

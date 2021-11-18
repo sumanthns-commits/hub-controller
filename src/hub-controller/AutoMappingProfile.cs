@@ -15,6 +15,8 @@ namespace HubController
         {
             CreateMap<Hub, HubDTO>();
             CreateMap<HubDAO, Hub>();
+            CreateMap<Thing, ThingDTO>();
+            CreateMap<ThingDAO, Thing>();
         }
     }
 }
