@@ -15,11 +15,11 @@ namespace HubController.Repositories
         private readonly DynamoDBContext _context;
         private readonly IThingIdGenerator _thingIdGenerator;
 
-        public DynamoThingRepository(DynamoDBContext context, IAmazonDynamoDB client, IThingIdGenerator thingIdGenerator)
+        public DynamoThingRepository(IAmazonDynamoDB client, IThingIdGenerator thingIdGenerator)
         {
-            _context = context;
             _client = client;
             _thingIdGenerator = thingIdGenerator;
+            _context = new DynamoDBContext(_client);
         }
 
         public async Task<Thing> Create(Guid hubId, string name, string description, string thingId)
