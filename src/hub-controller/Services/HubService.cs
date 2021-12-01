@@ -1,5 +1,4 @@
-﻿using Amazon.DynamoDBv2.DataModel;
-using HubController.Entities;
+﻿using HubController.Entities;
 using HubController.Exceptions;
 using HubController.Models.DAO;
 using HubController.Repositories;

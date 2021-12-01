@@ -26,6 +26,12 @@ Resources:
       Auth:
         DefaultAuthorizer: Oauth2Authorizer
         Authorizers:
+          MachineAuthorizer:
+            AuthorizerPayloadFormatVersion: 2.0
+            FunctionArn: !GetAtt MachineAuthorizerFunction.Arn
+            Identity:
+              Headers:
+                - Authorization
           Oauth2Authorizer:
             AuthorizationScopes:
               - !Sub ${HubResourceServerName}/${HubCreatorScope}
@@ -70,7 +76,7 @@ Resources:
             Path: /machineapi/{proxy+}
             Method: Get
             Auth:
-              Authorizer: "NONE"
+              Authorizer: MachineAuthorizer
         RootApi:
           Type: HttpApi
           Properties:
@@ -78,6 +84,32 @@ Resources:
             PayloadFormatVersion: "2.0"
             Path: /
             Method: ANY
+
+  MachineAuthorizerFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      Description: A simple example includes a .NET Core WebAPI App with DynamoDB table.
+      CodeUri: ./src/hub-controller/
+      Handler: hub-controller::HubController.MachineAuthorizerEntryPoint::FunctionHandler
+      Runtime: dotnetcore3.1
+      MemorySize: 1024
+      Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
+        Variables:
+          TABLE_NAME: !Ref HubControllerTable
+          ASPNETCORE_ENVIRONMENT: Production
+      Policies:
+        # Give Create/Read/Update/Delete Permissions to the HubControllerTable
+        - DynamoDBReadPolicy:
+            TableName: !Ref HubControllerTable
+
+  MachineAuthorizerPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt MachineAuthorizerFunction.Arn
+      Principal: apigateway.amazonaws.com
+      # https://docs.aws.amazon.com/apigateway/latest/developerguide/arn-format-reference.html
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${HubControllerAPI}/authorizers/*
 
   # DynamoDB table to store item: {id: &lt;ID&gt;, name: &lt;NAME&gt;}
   HubControllerTable:

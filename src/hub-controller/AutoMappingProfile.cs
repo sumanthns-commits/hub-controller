@@ -14,8 +14,10 @@ namespace HubController
         public AutoMappingProfile()
         {
             CreateMap<Hub, HubDTO>();
+            CreateMap<Hub, MachineDTO>();
             CreateMap<HubDAO, Hub>();
             CreateMap<Thing, ThingDTO>();
+            CreateMap<Thing, MachineThingDTO>();
             CreateMap<ThingDAO, Thing>();
         }
     }
