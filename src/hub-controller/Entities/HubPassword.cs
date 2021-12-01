@@ -18,21 +18,25 @@ namespace HubController.Entities
         /// to learn more visit https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/MidLevelAPILimitations.SupportedTypes.html
         /// <summary>
         [DynamoDBHashKey("Id")] //Partition key
-        public String HubId { get; set; }
+        public String UserId { get; set; }
 
-        public static HubPassword Create(Guid hubId, string passwordHash)
+        public static HubPassword Create(string userId, Guid hubId, string passwordHash)
         {
             return new HubPassword()
             {
-                HubId = GetPrimaryKey(hubId),
+                UserId = GetPrimaryKey(userId),
+                HubId = hubId.ToString(),
                 PasswordHash = passwordHash
             };
         }
 
-        public static String GetPrimaryKey(Guid hubId)
+        public static string GetPrimaryKey(string userId)
         {
-            return $"hub_pass_{hubId}";
+            return $"hub_pass_{userId}";
         }
+
+        [DynamoDBRangeKey("SortId")]
+        public string HubId { get; set; }
 
         [DynamoDBProperty]
         public string PasswordHash { get; set; }

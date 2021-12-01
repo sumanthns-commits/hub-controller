@@ -11,6 +11,7 @@ namespace HubController.Models.DTO
         public String Name { get; set; }
         public String Description { get; set; }
         public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
         public List<ThingDTO> Things { get; set; }
     }
 }

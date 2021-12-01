@@ -41,6 +41,7 @@ namespace HubController.Entities
         public String Status { get; set; }
 
         public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
 
         public static List<string> ValidStatuses { get { return new List<string>() { Constants.THING_OFF, Constants.THING_ON }; } }
     }

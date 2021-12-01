@@ -101,6 +101,7 @@ namespace HubController.Services
             }
             
             existingThing.Status = thingStatusDAO.Status;
+            existingThing.UpdatedAt = DateTime.UtcNow;
             await _hubService.SaveHub(hub);
             return existingThing;
         }

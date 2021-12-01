@@ -24,7 +24,7 @@ namespace HubController.Repositories
             string description, string passwordHash)
         {
             var hub = Hub.Create(userId, name, description);
-            var hubPassword = HubPassword.Create(hub.HubId, passwordHash);
+            var hubPassword = HubPassword.Create(userId, hub.HubId, passwordHash);
             await _context.SaveAsync<HubPassword>(hubPassword);
             await _context.SaveAsync<Hub>(hub);
             return hub;
