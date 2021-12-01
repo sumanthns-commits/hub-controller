@@ -8,6 +8,7 @@ namespace HubController
 {
     public class MachineAuthorizerEntryPoint
     {
+        [LambdaSerializer(typeof(Amazon.Lambda.Serialization.Json.JsonSerializer))]
         public APIGatewayCustomAuthorizerResponse FunctionHandler(APIGatewayCustomAuthorizerRequest input, ILambdaContext context)
         {
             LambdaLogger.Log("In auth function");
@@ -19,13 +20,14 @@ namespace HubController
                 string authHeader;
                 input.Headers.TryGetValue("authorization", out authHeader);
                 LambdaLogger.Log($"Auth header {authHeader}");
-                if(authHeader.Contains("Basic"))
+                if (authHeader.Contains("Basic"))
                 {
                     ok = true;
                 }
-                
+                LambdaLogger.Log($"Ok {ok}");
+
             }
-            
+
             return new APIGatewayCustomAuthorizerResponse
             {
                 PrincipalID = "some principal Id",//principal info here...

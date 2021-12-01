@@ -23,6 +23,9 @@ Resources:
     DependsOn: UserPool
     Type: AWS::Serverless::HttpApi
     Properties:
+      AccessLogSettings:
+        DestinationArn: !GetAtt HubControllerApiLogGroup.Arn
+        Format: $context.identity.sourceIp - - [$context.requestTime] "$context.httpMethod $context.routeKey $context.protocol" $context.status $context.responseLength $context.requestId $context.integrationErrorMessage
       Auth:
         DefaultAuthorizer: Oauth2Authorizer
         Authorizers:
@@ -40,6 +43,11 @@ Resources:
               issuer: !Sub https://cognito-idp.${AWS::Region}.amazonaws.com/${UserPool}
               audience:
                 - !Ref UserPoolMachineClient
+
+  HubControllerApiLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      RetentionInDays: 7
 
   HubControllerFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
