@@ -35,7 +35,7 @@ namespace HubController.Tests.Controllers
                 mc.AddProfile(new AutoMappingProfile());
             });
             _mapper = mappingConfig.CreateMapper();
-            _controller = new HubsController(new HubService(_mockHubRepo, new UserService()), _mapper)
+            _controller = new HubsController(new HubService(_mockHubRepo, new UserService(), new PasswordService()), _mapper)
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -52,18 +52,22 @@ namespace HubController.Tests.Controllers
 
         [Theory]
         [InlineAutoData]
-        public async void CreateHub_Should_Return_Hub_Created(string name)
+        public async void CreateHub_Should_Return_Hub_Created(string name, string description, string password)
         {
             // Act
             var hubId = Guid.NewGuid();
             _mockHubRepo.FindAll(_userId).Returns(new List<Hub>());
-            _mockHubRepo.Create(_userId, name).Returns(
-                Task.FromResult(new Hub()
-                {
-                    Name = name,
-                    HubId = hubId
-                }));
-            var hubDao = new HubDAO() { Name = name };
+            _mockHubRepo.Create(_userId, name,
+                description,
+                Arg.Is<string>(
+                    passwordHash => new PasswordService().VerifyPassword(passwordHash, password)))
+                .Returns(Task.FromResult(
+                    new Hub() {
+                        Name = name,
+                        HubId = hubId,
+                        Description = description
+                    }));
+            var hubDao = new HubDAO() { Name = name, Description = description, Password = password };
 
             // Act
             var result = await _controller.Post(hubDao) as CreatedAtActionResult;
@@ -73,6 +77,7 @@ namespace HubController.Tests.Controllers
 
             var actualHubDto = result.Value as HubDTO;
             actualHubDto.Name.Should().Be(name);
+            actualHubDto.Description.Should().Be(description);
             actualHubDto.HubId.Should().Be(hubId);
         }
     }

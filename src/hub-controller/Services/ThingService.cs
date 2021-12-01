@@ -12,13 +12,11 @@ namespace HubController.Services
 {
     public class ThingService : IThingService
     {
-        private readonly IThingRepository _thingRepository;
         private readonly IThingIdGenerator _thingIdGenerator;
         private readonly IHubService _hubService;
 
-        public ThingService(IThingRepository thingRepository, IThingIdGenerator thingIdGenerator, IHubService hubService)
+        public ThingService(IThingIdGenerator thingIdGenerator, IHubService hubService)
         {
-            _thingRepository = thingRepository;
             _thingIdGenerator = thingIdGenerator;
             _hubService = hubService;
         }
@@ -31,9 +29,12 @@ namespace HubController.Services
                 throw new KeyNotFoundException($"Hub {hubId} not found.");
             }
 
-            var things = await _thingRepository.FindAll(hubId);
             // check idempotency
-            var existingThing = things.FirstOrDefault(thing => thing.Name == thingDao.Name);
+            if(hub.Things == null)
+            {
+                hub.Things = new List<Thing>();
+            }
+            var existingThing = hub.Things.FirstOrDefault(thing => thing.Name == thingDao.Name);
             if(existingThing != null)
             {
                 return existingThing;
@@ -41,17 +42,67 @@ namespace HubController.Services
 
             // check limit
             var allowedNumberOfThingsPerHub = Int32.Parse(Environment.GetEnvironmentVariable("THINGS_ALLOWED_PER_HUB") ?? Constants.DEFAULT_THINGS_ALLOWED_PER_HUB);
-            if(things.Count >= allowedNumberOfThingsPerHub)
+            if(hub.Things.Count >= allowedNumberOfThingsPerHub)
             {
                 throw new LimitExceededException($"Cannot create more things for Hub {hubId}. Limit reached.");
             }
 
-            return await _thingRepository.Create(hubId, thingDao.Name, thingDao.Description, _thingIdGenerator.Generate());
+            // Add thing to hub and save
+            var thing = Thing.Create(thingDao.Name, thingDao.Description, _thingIdGenerator.Generate());
+            hub.Things.Add(thing);
+            await _hubService.SaveHub(hub);
+            return thing;
         }
 
-        public Task<Thing> GetThingById(HttpContext httpContext, Guid hubId, string id)
+        public async Task DeleteThing(HttpContext httpContext, Guid hubId, string id)
         {
-            throw new NotImplementedException();
+            var hub = await _hubService.GetHubById(httpContext, hubId);
+            if (hub == null || hub.Things == null)
+            {
+                return;
+            }
+            var existingThing = hub.Things.FirstOrDefault(thing => thing.ThingId == id);
+            if(existingThing == null)
+            {
+                return;
+            }
+
+            hub.Things.Remove(existingThing);
+            await _hubService.SaveHub(hub);
+        }
+
+        public async Task<Thing> GetThingById(HttpContext httpContext, Guid hubId, string thingId)
+        {
+            var hub = await _hubService.GetHubById(httpContext, hubId);
+            if (hub == null)
+            {
+                return null;
+            }
+            return hub.Things.FirstOrDefault(thing => thing.ThingId == thingId);
+        }
+
+        public async Task<Thing> UpdateStatus(HttpContext httpContext, Guid hubId, string id, ThingStatusDAO thingStatusDAO)
+        {
+            var hub = await _hubService.GetHubById(httpContext, hubId);
+            if (hub == null)
+            {
+                return null;
+            }
+
+            var existingThing = hub.Things.FirstOrDefault(thing => thing.ThingId == id);
+            if (existingThing == null)
+            {
+                return null;
+            }
+            
+            if(existingThing.Status == thingStatusDAO.Status)
+            {
+                return existingThing;
+            }
+            
+            existingThing.Status = thingStatusDAO.Status;
+            await _hubService.SaveHub(hub);
+            return existingThing;
         }
     }
 }

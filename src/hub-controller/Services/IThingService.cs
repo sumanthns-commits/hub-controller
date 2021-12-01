@@ -12,5 +12,7 @@ namespace HubController.Services
     {
         public Task<Thing> Create(HttpContext httpContext, Guid hubId, ThingDAO thingDao);
         public Task<Thing> GetThingById(HttpContext httpContext, Guid hubId, string id);
+        public Task DeleteThing(HttpContext httpContext, Guid hubId, string id);
+        public Task<Thing> UpdateStatus(HttpContext httpContext, Guid hubId, string id, ThingStatusDAO thingStatusDAO);
     }
 }

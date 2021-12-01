@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 using AutoMapper;
 using HubController.Models.DTO;
 using HubController.Models.DAO;
+using HubController.Entities;
 
 namespace HubController.Controllers
 {
@@ -57,12 +58,29 @@ namespace HubController.Controllers
         }
 
         // DELETE api/hubs/{hubId}/things/{id}
-        //[HttpDelete("{id}")]
-        //public async Task<IActionResult> Delete(Guid id)
-        //{
-        //    await _hubService.DeleteHub(HttpContext, id);
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(Guid hubId, string id)
+        {
+            await _thingService.DeleteThing(HttpContext, hubId, id);
 
-        //    return NoContent();
-        //}
+            return NoContent();
+        }
+
+        // PATCH api/hubs/{hubId}/things/{id}
+        [HttpPatch("{id}")]
+        public async Task<IActionResult> Patch(Guid hubId, string id, [FromBody] ThingStatusDAO thingStatusDAO)
+        {
+            if (String.IsNullOrEmpty(thingStatusDAO.Status) || !Thing.ValidStatuses.Contains(thingStatusDAO.Status)) { 
+                throw new ArgumentException($"Thing status should be off|on");
+            }
+
+            var thing = await _thingService.UpdateStatus(HttpContext, hubId, id, thingStatusDAO);
+            if (thing == null)
+            {
+                throw new KeyNotFoundException($"Thing {id} not found.");
+            }
+
+            return Ok(_mapper.Map<ThingDTO>(thing));
+        }
     }
 }

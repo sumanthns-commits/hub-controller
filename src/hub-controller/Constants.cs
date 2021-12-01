@@ -11,5 +11,7 @@ namespace HubController
         public const String DEFAULT_HUBS_ALLOWED_PER_USER = "10";
         public const String DEFAULT_THINGS_ALLOWED_PER_HUB = "10";
         public const int THING_ID_LENGTH = 10; // 8 bit micro-controller cannot handle char array of length > 10
+        public const string THING_ON = "on";
+        public const string THING_OFF = "off";
     }
 }

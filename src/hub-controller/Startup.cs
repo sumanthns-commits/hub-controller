@@ -40,7 +40,7 @@ namespace HubController
             services.AddScoped<IHubService, HubService>();
             services.AddScoped<IThingIdGenerator, ThingIdGenerator>();
             services.AddScoped<IThingService, ThingService>();
-            services.AddScoped<IThingRepository, DynamoThingRepository>();
+            services.AddSingleton<IPasswordService, PasswordService>();
 
             // Auth is handled in api gateway. Provide a dummy authentication handler to handle
             // authrorization errors

@@ -46,13 +46,13 @@ namespace HubController.Controllers
 
         // POST api/hubs
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody] HubDAO hub)
+        public async Task<IActionResult> Post([FromBody] HubDAO hubDAO)
         {
-            if (hub == null || String.IsNullOrEmpty(hub.Name))
+            if (hubDAO == null || String.IsNullOrEmpty(hubDAO.Name) || String.IsNullOrEmpty(hubDAO.Password))
             {
-                throw new ArgumentException("Invalid input! hub name is required");
+                throw new ArgumentException("Invalid input! hub name and password is required");
             }
-            var newHub = await _hubService.CreateHub(HttpContext, hub.Name);
+            var newHub = await _hubService.CreateHub(HttpContext, hubDAO);
             return CreatedAtAction(nameof(Get), new { Id = newHub.HubId }, _mapper.Map<HubDTO>(newHub));
         }
 

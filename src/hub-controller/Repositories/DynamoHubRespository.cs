@@ -20,9 +20,12 @@ namespace HubController.Repositories
         }
 
 
-        public async Task<Hub> Create(String userId, String name)
+        public async Task<Hub> Create(string userId, string name,
+            string description, string passwordHash)
         {
-            var hub = Hub.Create(userId, name);
+            var hub = Hub.Create(userId, name, description);
+            var hubPassword = HubPassword.Create(hub.HubId, passwordHash);
+            await _context.SaveAsync<HubPassword>(hubPassword);
             await _context.SaveAsync<Hub>(hub);
             return hub;
         }
@@ -48,16 +51,23 @@ namespace HubController.Repositories
             {
                 hubs.AddRange(await search.GetNextSetAsync());
             } while (!search.IsDone);
-            
+
             return hubs;
         }
 
         public Task<Hub> FindConsistently(string userId, Guid id)
         {
             var primaryKey = Hub.GetPrimaryKey(userId);
-            return _context.LoadAsync<Hub>(primaryKey, id, new DynamoDBOperationConfig() { 
+            return _context.LoadAsync<Hub>(primaryKey, id, new DynamoDBOperationConfig()
+            {
                 ConsistentRead = true
             });
+        }
+
+        public Task Save(Hub hub)
+        {
+            hub.UpdatedAt = DateTime.UtcNow;
+            return _context.SaveAsync<Hub>(hub);
         }
     }
 }

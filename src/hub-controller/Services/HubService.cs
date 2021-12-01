@@ -1,6 +1,7 @@
 ﻿using Amazon.DynamoDBv2.DataModel;
 using HubController.Entities;
 using HubController.Exceptions;
+using HubController.Models.DAO;
 using HubController.Repositories;
 using Microsoft.AspNetCore.Http;
 using System;
@@ -14,21 +15,23 @@ namespace HubController.Services
     {
         private readonly IHubRepository _hubRepository;
         private readonly IUserService _userService;
+        private readonly IPasswordService _passwordService;
 
-        public HubService(IHubRepository hubRepoitory, IUserService userService)
+        public HubService(IHubRepository hubRepoitory, IUserService userService, IPasswordService passwordService)
         {
             _hubRepository = hubRepoitory;
             _userService = userService;
+            _passwordService = passwordService;
         }
 
-        public async Task<Hub> CreateHub(HttpContext httpContext, String name)
+        public async Task<Hub> CreateHub(HttpContext httpContext, HubDAO hubDAO)
         {
             var allowedNumberOfHubsPerUser = Int32.Parse(Environment.GetEnvironmentVariable("HUBS_ALLOWED_PER_USER") ?? Constants.DEFAULT_HUBS_ALLOWED_PER_USER);
             var userId = _userService.GetUserId(httpContext);
             var hubs = await _hubRepository.FindAll(userId);
             
             // Hubs are idempotent by name
-            var existingHub = hubs.FirstOrDefault(h => h.Name.Equals(name));
+            var existingHub = hubs.FirstOrDefault(h => h.Name.Equals(hubDAO.Name));
             if (existingHub != null)
             {
                 return existingHub;
@@ -39,8 +42,8 @@ namespace HubController.Services
             {
                 throw new LimitExceededException("Cannot create more hubs. Limit reached.");
             }
-
-            return await _hubRepository.Create(userId, name);
+            var passwordHash = _passwordService.CreateHash(hubDAO.Password);
+            return await _hubRepository.Create(userId, hubDAO.Name, hubDAO.Description, passwordHash);
         }
 
         public async Task DeleteHub(HttpContext httpContext, Guid id)
@@ -67,6 +70,11 @@ namespace HubController.Services
         {
             var userId = _userService.GetUserId(httpContext);
             return _hubRepository.Find(userId, id);
+        }
+
+        public Task SaveHub(Hub hub)
+        {
+            return _hubRepository.Save(hub);
         }
     }
 }
