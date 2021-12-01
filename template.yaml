@@ -60,8 +60,17 @@ Resources:
           Properties:
             ApiId: !Ref HubControllerAPI
             PayloadFormatVersion: "2.0"
-            Path: /{proxy+}
+            Path: /api/{proxy+}
             Method: ANY
+        MachineProxyApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HubControllerAPI
+            PayloadFormatVersion: "2.0"
+            Path: /machineapi/{proxy+}
+            Method: Get
+            Auth:
+              Authorizer: "NONE"
         RootApi:
           Type: HttpApi
           Properties:

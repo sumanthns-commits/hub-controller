@@ -23,6 +23,7 @@ namespace HubController.Entities
                 Name = name,
                 Description = description,
                 CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
                 Status = Constants.THING_OFF
             };
         }
