@@ -1,7 +1,11 @@
 using System;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
+using Amazon.Lambda.APIGatewayEvents;
+using Amazon.Lambda.Core;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http.Features.Authentication;
 using Microsoft.Extensions.Hosting;
 
 namespace HubController
@@ -47,6 +51,26 @@ namespace HubController
         /// <param name="builder"></param>
         protected override void Init(IHostBuilder builder)
         {
+        }
+
+        protected override void PostMarshallHttpAuthenticationFeature(IHttpAuthenticationFeature aspNetCoreHttpAuthenticationFeature, APIGatewayHttpApiV2ProxyRequest lambdaRequest, ILambdaContext lambdaContext)
+        {
+            var authorizer = lambdaRequest?.RequestContext?.Authorizer;
+
+            if (authorizer != null)
+            {
+                // handling claims output from custom lambda authorizer
+                if (authorizer.Lambda != null)
+                {
+                    var identity = new ClaimsIdentity(authorizer.Lambda.Select(
+                        entry => new Claim(entry.Key, entry.Value.ToString())), "AuthorizerIdentity");
+
+                    LambdaLogger.Log(
+                        $"Configuring HttpContext.User {authorizer.Lambda.Count} claims coming from Lambda authorizer API Gateway's Request Context ");
+                    aspNetCoreHttpAuthenticationFeature.User = new ClaimsPrincipal(identity);
+                }
+            }
+
         }
     }
 }

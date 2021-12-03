@@ -10,7 +10,7 @@ namespace HubController.Services
     {
         public String GetUserId(HttpContext httpContext)
         {
-            var subjectClaim = httpContext.User.Claims.First(claim => claim.Type == "sub");
+            var subjectClaim = httpContext.User.Claims.First(claim => claim.Type == Constants.USER_SUBJECT_CLAIM_TYPE);
             if (subjectClaim == null)
             {
                 throw new Exception("Subject claim is not found on user");

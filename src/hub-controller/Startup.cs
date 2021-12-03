@@ -35,12 +35,14 @@ namespace HubController
             services.AddSingleton<IAmazonDynamoDB>(new AmazonDynamoDBClient(RegionEndpoint.GetBySystemName(region)));
             
             // Add custom services
-            services.AddScoped<IUserService, UserService>();
-            services.AddScoped<IHubRepository, DynamoHubRespository>();
-            services.AddScoped<IHubService, HubService>();
-            services.AddScoped<IThingIdGenerator, ThingIdGenerator>();
-            services.AddScoped<IThingService, ThingService>();
+            services.AddSingleton<IUserService, UserService>();
+            services.AddSingleton<IHubRepository, DynamoHubRespository>();
+            services.AddSingleton<IHubPasswordRepository, DynamoHubPasswordRepository>();
+            services.AddSingleton<IHubService, HubService>();
+            services.AddSingleton<IThingIdGenerator, ThingIdGenerator>();
+            services.AddSingleton<IThingService, ThingService>();
             services.AddSingleton<IPasswordService, PasswordService>();
+            services.AddSingleton<IHubPasswordService, HubPasswordService>();
 
             // Auth is handled in api gateway. Provide a dummy authentication handler to handle
             // authrorization errors

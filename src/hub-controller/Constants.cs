@@ -13,5 +13,7 @@ namespace HubController
         public const int THING_ID_LENGTH = 10; // 8 bit micro-controller cannot handle char array of length > 10
         public const string THING_ON = "on";
         public const string THING_OFF = "off";
+        public const string HUB_ID_CLAIM_TYPE = "hubId";
+        public const string USER_SUBJECT_CLAIM_TYPE = "sub";
     }
 }

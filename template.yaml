@@ -25,12 +25,12 @@ Resources:
     Properties:
       AccessLogSettings:
         DestinationArn: !GetAtt HubControllerApiLogGroup.Arn
-        Format: $context.identity.sourceIp - - [$context.requestTime] "$context.httpMethod $context.routeKey $context.protocol" $context.status $context.responseLength $context.requestId $context.integrationErrorMessage
+        Format: $context.identity.sourceIp - - [$context.requestTime] "$context.httpMethod $context.routeKey $context.protocol" $context.status $context.responseLength $context.requestId $context.integrationErrorMessage $context.authorizer.error
       Auth:
         DefaultAuthorizer: Oauth2Authorizer
         Authorizers:
           MachineAuthorizer:
-            AuthorizerPayloadFormatVersion: 2.0
+            AuthorizerPayloadFormatVersion: 1.0
             FunctionArn: !GetAtt MachineAuthorizerFunction.Arn
             Identity:
               Headers:
@@ -98,7 +98,7 @@ Resources:
     Properties:
       Description: A simple example includes a .NET Core WebAPI App with DynamoDB table.
       CodeUri: ./src/hub-controller/
-      Handler: hub-controller::HubController.MachineAuthorizerEntryPoint::FunctionHandler
+      Handler: hub-controller::HubController.MachineAuthorizerEntryPoint::FunctionHandlerAsync
       Runtime: dotnetcore3.1
       MemorySize: 1024
       Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
