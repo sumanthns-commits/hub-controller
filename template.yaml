@@ -25,7 +25,7 @@ Resources:
     Properties:
       AccessLogSettings:
         DestinationArn: !GetAtt HubControllerApiLogGroup.Arn
-        Format: $context.identity.sourceIp - - [$context.requestTime] "$context.httpMethod $context.routeKey $context.protocol" $context.status $context.responseLength $context.requestId $context.integrationErrorMessage $context.authorizer.error
+        Format: $context.identity.sourceIp - - [$context.requestTime] "$context.httpMethod $context.routeKey $context.protocol" $context.status $context.responseLength $context.requestId $context.integrationErrorMessage $context.authorizer.error $context.error.message
       Auth:
         DefaultAuthorizer: Oauth2Authorizer
         Authorizers:
@@ -38,11 +38,13 @@ Resources:
           Oauth2Authorizer:
             AuthorizationScopes:
               - !Sub ${HubResourceServerName}/${HubCreatorScope}
+              - aws.cognito.signin.user.admin
             IdentitySource: $request.header.Authorization
             JwtConfiguration:
               issuer: !Sub https://cognito-idp.${AWS::Region}.amazonaws.com/${UserPool}
               audience:
                 - !Ref UserPoolMachineClient
+                - !Ref UserPoolAppClient
 
   HubControllerApiLogGroup:
     Type: AWS::Logs::LogGroup
@@ -175,6 +177,28 @@ Resources:
       AllowedOAuthScopes:
         - !Sub ${HubResourceServerName}/${HubCreatorScope}
 
+  # Create a client application for authentication
+  UserPoolAppClient:
+    DependsOn: UserPoolHubResourceServer
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      UserPoolId: !Ref UserPool
+      AllowedOAuthFlows:
+        - code
+      SupportedIdentityProviders:
+        - COGNITO
+      AllowedOAuthScopes:
+        - !Sub ${HubResourceServerName}/${HubCreatorScope}
+        - aws.cognito.signin.user.admin
+      AllowedOAuthFlowsUserPoolClient: true
+      ExplicitAuthFlows:
+        - ALLOW_USER_SRP_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+      CallbackURLs:
+        - hubapp://
+      LogoutURLs:
+        - hubapp://
+
   # Create a hosted domain for users to signup and login
   UserPoolDomain:
     Type: AWS::Cognito::UserPoolDomain
@@ -182,10 +206,23 @@ Resources:
       Domain: !Sub myauth${AWS::AccountId}
       UserPoolId: !Ref UserPool
 
+  IdentityPool:
+    Type: AWS::Cognito::IdentityPool
+    Properties:
+      AllowUnauthenticatedIdentities: false
+      CognitoIdentityProviders:
+        - ClientId: !Ref UserPoolAppClient
+          ProviderName: !Sub cognito-idp.${AWS::Region}.amazonaws.com/${UserPool}
+          ServerSideTokenCheck: true
+
 Outputs:
   WebEndpoint:
     Description: "API Gateway endpoint URL"
     Value: !Sub "https://${HubControllerAPI}.execute-api.${AWS::Region}.amazonaws.com/"
+
+  AppClientId:
+    Description: "Client id of user pool client used for frontend app"
+    Value: !Ref UserPoolAppClient
 
   AuthUrl:
     Description: "URL used for getting auth token"
