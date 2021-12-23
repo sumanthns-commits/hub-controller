@@ -13,10 +13,18 @@ Parameters:
     Type: String
     Default: hub-controller
     Description: Name of the cognito resouce server for api
-  HubCreatorScope:
+  HubAdminScope:
     Type: String
-    Default: hub.create
+    Default: hub:admin
     Description: Scope to allow hub creation in cognito
+  AuthDomain:
+    Type: String
+    Default: dev-ra2yr5l1.us.auth0.com
+    Description: Auth Domain
+  HubControllerAudience:
+    Type: String
+    Default: https://hub-controller
+    Description: App name registered in Auth Provider
 
 Resources:
   HubControllerAPI:
@@ -37,14 +45,12 @@ Resources:
                 - Authorization
           Oauth2Authorizer:
             AuthorizationScopes:
-              - !Sub ${HubResourceServerName}/${HubCreatorScope}
-              - aws.cognito.signin.user.admin
+              - !Ref HubAdminScope
             IdentitySource: $request.header.Authorization
             JwtConfiguration:
-              issuer: !Sub https://cognito-idp.${AWS::Region}.amazonaws.com/${UserPool}
+              issuer: !Sub https://${AuthDomain}/
               audience:
-                - !Ref UserPoolMachineClient
-                - !Ref UserPoolAppClient
+                - !Ref HubControllerAudience
 
   HubControllerApiLogGroup:
     Type: AWS::Logs::LogGroup
@@ -63,7 +69,7 @@ Resources:
         Variables:
           TABLE_NAME: !Ref HubControllerTable
           ASPNETCORE_ENVIRONMENT: Production
-          HUB_CREATOR_SCOPE: !Sub ${HubResourceServerName}/${HubCreatorScope}
+          HUB_ADMIN_SCOPE: !Ref HubAdminScope
           HUBS_ALLOWED_PER_USER: 5
           THINGS_ALLOWED_THINGS_HUB: 10
       Policies:
@@ -158,7 +164,7 @@ Resources:
       Identifier: !Ref HubResourceServerName
       Name: HubControllerResourceServer
       Scopes:
-        - ScopeName: !Ref HubCreatorScope
+        - ScopeName: !Ref HubAdminScope
           ScopeDescription: Create hubs
       UserPoolId: !Ref UserPool
 
@@ -175,7 +181,7 @@ Resources:
       AllowedOAuthFlows:
         - client_credentials
       AllowedOAuthScopes:
-        - !Sub ${HubResourceServerName}/${HubCreatorScope}
+        - !Sub ${HubResourceServerName}/${HubAdminScope}
 
   # Create a client application for authentication
   UserPoolAppClient:
@@ -188,7 +194,7 @@ Resources:
       SupportedIdentityProviders:
         - COGNITO
       AllowedOAuthScopes:
-        - !Sub ${HubResourceServerName}/${HubCreatorScope}
+        - !Sub ${HubResourceServerName}/${HubAdminScope}
         - aws.cognito.signin.user.admin
       AllowedOAuthFlowsUserPoolClient: true
       ExplicitAuthFlows:

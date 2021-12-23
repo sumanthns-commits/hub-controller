@@ -15,6 +15,10 @@ namespace HubController.Services
             {
                 throw new Exception("Subject claim is not found on user");
             }
+            if(subjectClaim.Value.Contains("@"))
+            {
+                return subjectClaim.Value.Split("@")[0];
+            }
             return subjectClaim.Value;
         }
     }

@@ -11,7 +11,7 @@ using HubController.Models.DAO;
 
 namespace HubController.Controllers
 {
-    [Authorize(Policy = "HubCreator")]
+    [Authorize(Policy = "HubAdmin")]
     [Route("api/[controller]")]
     public class HubsController : ControllerBase
     {
@@ -37,7 +37,7 @@ namespace HubController.Controllers
         public async Task<IActionResult> Get(Guid id)
         {
             var hub = await _hubService.GetHubById(HttpContext, id);
-            if(hub == null)
+            if (hub == null)
             {
                 throw new KeyNotFoundException($"Hub {id} not found.");
             }

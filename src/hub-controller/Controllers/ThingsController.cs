@@ -12,7 +12,7 @@ using HubController.Entities;
 
 namespace HubController.Controllers
 {
-    [Authorize(Policy = "HubCreator")]
+    [Authorize(Policy = "HubAdmin")]
     [Route("api/hubs/{hubId}/[controller]")]
     public class ThingsController : ControllerBase
     {
@@ -70,7 +70,8 @@ namespace HubController.Controllers
         [HttpPatch("{id}")]
         public async Task<IActionResult> Patch(Guid hubId, string id, [FromBody] ThingStatusDAO thingStatusDAO)
         {
-            if (String.IsNullOrEmpty(thingStatusDAO.Status) || !Thing.ValidStatuses.Contains(thingStatusDAO.Status)) { 
+            if (String.IsNullOrEmpty(thingStatusDAO.Status) || !Thing.ValidStatuses.Contains(thingStatusDAO.Status))
+            {
                 throw new ArgumentException($"Thing status should be off|on");
             }
 

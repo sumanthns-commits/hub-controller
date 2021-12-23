@@ -33,7 +33,7 @@ namespace HubController
 
             string region = Environment.GetEnvironmentVariable("AWS_REGION") ?? RegionEndpoint.USEast1.SystemName;
             services.AddSingleton<IAmazonDynamoDB>(new AmazonDynamoDBClient(RegionEndpoint.GetBySystemName(region)));
-            
+
             // Add custom services
             services.AddSingleton<IUserService, UserService>();
             services.AddSingleton<IHubRepository, DynamoHubRespository>();
@@ -53,10 +53,10 @@ namespace HubController
                 options.AddScheme<NoopAuthenticationHandler>("forbidScheme", "Handle Forbidden");
             });
 
-            var hubCreatorScope = Environment.GetEnvironmentVariable("HUB_CREATOR_SCOPE");
+            var hubAdminScope = Environment.GetEnvironmentVariable("HUB_ADMIN_SCOPE");
             services.AddAuthorization(options =>
             {
-                options.AddPolicy("HubCreator", policy => policy.RequireClaim("scope", hubCreatorScope));
+                options.AddPolicy("HubAdmin", policy => policy.RequireClaim("scope", hubAdminScope));
             });
 
             // Add AutoMapper
