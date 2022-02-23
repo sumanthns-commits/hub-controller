@@ -11,6 +11,7 @@ using Amazon.DynamoDBv2;
 using HubController.Services;
 using HubController.Middleware;
 using HubController.Repositories;
+using System.Linq;
 
 namespace HubController
 {
@@ -56,7 +57,13 @@ namespace HubController
             var hubAdminScope = Environment.GetEnvironmentVariable("HUB_ADMIN_SCOPE");
             services.AddAuthorization(options =>
             {
-                options.AddPolicy("HubAdmin", policy => policy.RequireClaim("scope", hubAdminScope));
+                options.AddPolicy("HubAdmin", policy => policy.RequireAssertion(handler =>
+                {
+                    var scopeClaim = handler.User.FindFirst("scope");
+                    var scopes = scopeClaim?.Value.Split(' ');
+                    var hasScope = scopes?.Where(scope => scope == hubAdminScope).Any() ?? false;
+                    return hasScope;
+                }));
             });
 
             // Add AutoMapper
